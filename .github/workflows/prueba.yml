@@ -1,0 +1,22 @@
+﻿name: Comprobar Tokens
+
+on: [push]
+
+jobs:
+  check-tokens:
+    runs-on: self-hosted
+    steps:
+      - name: Comparar Tokens
+        shell: pwsh
+        env:
+          SECRET_DEV: ${{ secrets.DEV_TOKEN }}
+        run: |
+          $localDev = [System.Environment]::GetEnvironmentVariable("LOCAL_DEV_TOKEN", "Machine")
+          Write-Host "Comprobando variables..."
+          if ($env:SECRET_DEV -eq $localDev) {
+              Write-Host "EXITO: Los tokens coinciden."
+              exit 0
+          } else {
+              Write-Host "ERROR: Los tokens NO coinciden."
+              exit 1
+          }
