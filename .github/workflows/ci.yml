@@ -2,44 +2,45 @@ name: CI Workflow
 
 on:
   push:
-    branches: [ develop ]
+    branches:
+      - main
+      - develop
   pull_request:
-    types: [ opened, synchronize, reopened ]
-    branches: [ develop ]
-  workflow_dispatch:
-
-permissions:
-  contents: write
+    branches:
+      - main
+      - develop
 
 jobs:
   update-readme:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ github.ref }}
 
-      - name: Update README with feature
+      - name: Update README.md
+        shell: bash
         run: |
-          BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
-          echo "Añadida feature: $BRANCH_NAME" >> README.md
+          echo -e "\n## Última actualización: $(date)" >> README.md
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add README.md
-          git commit -m "ci: Añadida feature $BRANCH_NAME al README" || echo "No hay cambios"
-          git push
+          git commit -m "docs: actualizar README.md automáticamente [skip ci]" || echo "No hay cambios para subir"
+          git push || echo "No se pudo realizar el push"
 
   validate-dev:
-    needs: update-readme
     runs-on: self-hosted
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Validate DEV Secret
+        shell: bash
         run: |
           if [ "$LOCAL_DEV_TOKEN" = "${{ secrets.DEV_TOKEN }}" ]; then
             echo "DEV Token validado correctamente."
           else
-            echo "ERROR: LOCAL_DEV_TOKEN no coincide con DEV_TOKEN"
+            echo "DEV Token no coincide."
             exit 1
           fi
